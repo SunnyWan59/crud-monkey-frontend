@@ -9,20 +9,23 @@ export type TextProps = React.HTMLAttributes<HTMLSpanElement> & {
 
 export const Text = React.forwardRef<HTMLSpanElement, TextProps>(
   ({ className, variant = "body", asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "span";
-    return (
-      <Comp
-        ref={ref}
-        className={cn(
-          "text-gray-900",
-          variant === "body" && "text-base",
-          variant === "heading" && "text-xl font-bold",
-          variant === "label" && "text-sm font-medium",
-          className
-        )}
-        {...props}
-      />
+    const classes = cn(
+      "text-gray-900",
+      variant === "body" && "text-base",
+      variant === "heading" && "text-xl font-bold",
+      variant === "label" && "text-sm font-medium",
+      className
     );
+
+    if (asChild) {
+      return React.createElement(Slot as React.ElementType, {
+        ref,
+        className: classes,
+        ...props,
+      });
+    }
+
+    return <span ref={ref} className={classes} {...props} />;
   }
 );
 
