@@ -13,17 +13,16 @@ export type Field = {
   foreignKey?: string;
 };
 
-export type CrudConfig = {
-  create: boolean;
-  read: boolean;
-  update: boolean;
-  delete: boolean;
+export type Endpoint = {
+  id: string;
+  type: string;
+  path: string;
 };
 
 export type ModelNodeData = {
   name: string;
   fields: Field[];
-  crud?: CrudConfig;
+  endpoints?: Endpoint[];
   updateNode?: (id: string, data: Partial<ModelNodeData>) => void;
 };
 
@@ -83,12 +82,11 @@ export const ModelNode = ({ id, data }: { id: string; data: ModelNodeData }) => 
             </div>
           )}
         </div>
-        {data.crud && (
-          <div className="flex gap-1">
-            {data.crud.create && <Badge variant="success">C</Badge>}
-            {data.crud.read && <Badge variant="success">R</Badge>}
-            {data.crud.update && <Badge variant="success">U</Badge>}
-            {data.crud.delete && <Badge variant="success">D</Badge>}
+        {data.endpoints && data.endpoints.length > 0 && (
+          <div className="flex gap-1 flex-wrap mt-1">
+            {data.endpoints.map(ep => (
+              <Badge key={ep.id} variant="success" className="text-[10px] px-1 py-0">{ep.type}</Badge>
+            ))}
           </div>
         )}
       </div>
