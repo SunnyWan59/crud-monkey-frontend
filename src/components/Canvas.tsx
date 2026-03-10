@@ -12,7 +12,7 @@ import ReactFlow, {
   Edge,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Plus, Save, Loader2, X, Folder, Link2, Trash2 } from "lucide-react";
+import { Plus, Save, Loader2, X, Folder, Link2, Trash2, Upload } from "lucide-react";
 import { ModelNode, Endpoint } from "@/components/ModelNode";
 import { Button } from "@/components/Button";
 import { Text } from "@/components/Text";
@@ -20,6 +20,7 @@ import { Input } from "@/components/Input";
 import { Select } from "@/components/Select";
 import { Badge } from "@/components/Badge";
 import { useLoadingStateRequest } from "@/hooks/useLoadingStateRequest";
+import { dbmlToNodes } from "@/lib/dbmlParser";
 
 const nodeTypes = {
   modelNode: ModelNode,
@@ -30,6 +31,7 @@ export const Canvas = () => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const [editingEndpoint, setEditingEndpoint] = useState<{ nodeId: string; endpoint: Endpoint } | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { execute: saveSchema, isLoading: isSavingSchema } = useLoadingStateRequest("http://localhost:8000/api/save-schema/", "POST");
   const { execute: saveCrud, isLoading: isSavingCrud } = useLoadingStateRequest("http://localhost:8000/api/save-crud/", "POST");
@@ -133,6 +135,33 @@ export const Canvas = () => {
     });
   };
 
+  const handleUploadDbml = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".dbml")) {
+      alert("Please select a .dbml file.");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result;
+      if (typeof text !== "string") return;
+      try {
+        const parsedNodes = dbmlToNodes(text);
+        const withUpdateNode = parsedNodes.map((n) => ({
+          ...n,
+          data: { ...n.data, updateNode: handleUpdateNode },
+        }));
+        setNodes((nds) => nds.concat(withUpdateNode));
+      } catch (err) {
+        alert("Failed to parse DBML: " + (err instanceof Error ? err.message : String(err)));
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  };
+
   const handleDeleteEndpoint = (nodeId: string, endpointId: string) => {
     const node = nodes.find((n) => n.id === nodeId);
     if (node) {
@@ -189,20 +218,33 @@ export const Canvas = () => {
       </div>
 
       <div className="flex-1 w-full h-full relative">
-        <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded-md shadow-md flex flex-col gap-2">
-          <Text variant="heading" className="block">Schema Builder</Text>
-          <div className="flex gap-2">
-            <Button onClick={handleAddNode} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Add Model
-            </Button>
-            <Button variant="secondary" onClick={handleSave} disabled={isSaving} className="flex items-center gap-2">
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {!isSaving && <Save className="h-4 w-4" />}
-              {isSaving && "Saving..."}
-              {!isSaving && "Save Progress"}
-            </Button>
-          </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".dbml"
+          className="hidden"
+          onChange={handleUploadDbml}
+        />
+        <div className="absolute top-4 left-4 z-10 bg-white p-2 rounded-md shadow-md flex flex-row items-center gap-2">
+          <Text variant="label" className="font-bold shrink-0">Schema Builder</Text>
+          <Button onClick={handleAddNode} className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs">
+            <Plus className="h-3 w-3" />
+            Add Model
+          </Button>
+          <Button
+            variant="secondary"
+            className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-3 w-3" />
+            Upload DBML
+          </Button>
+          <Button variant="secondary" onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs">
+            {isSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+            {!isSaving && <Save className="h-3 w-3" />}
+            {isSaving && "Saving..."}
+            {!isSaving && "Save"}
+          </Button>
         </div>
         
         {menu && (
