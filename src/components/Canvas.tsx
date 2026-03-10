@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -38,6 +38,24 @@ export const Canvas = () => {
   const onEdgesChange = (changes: EdgeChange[]) => {
     setEdges((eds) => applyEdgeChanges(changes, eds));
   };
+
+  useEffect(() => {
+    const generatedEdges: Edge[] = [];
+    nodes.forEach((node) => {
+      node.data.fields?.forEach((field: any) => {
+        if (field.type === "foreign_key" && field.foreignKey) {
+          generatedEdges.push({
+            id: `e-${node.id}-${field.foreignKey}-${field.name}`,
+            source: node.id,
+            target: field.foreignKey,
+            animated: true,
+            style: { stroke: '#3b82f6', strokeWidth: 2 },
+          });
+        }
+      });
+    });
+    setEdges(generatedEdges);
+  }, [nodes]);
 
   const handleUpdateNode = (id: string, newData: any) => {
     setNodes((nds) =>
