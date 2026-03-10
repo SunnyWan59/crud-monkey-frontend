@@ -12,6 +12,7 @@ import ReactFlow, {
   Edge,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { Plus, Save, Loader2 } from "lucide-react";
 import { ModelNode, CrudConfig } from "@/components/ModelNode";
 import { Button } from "@/components/Button";
 import { Text } from "@/components/Text";
@@ -99,8 +100,13 @@ export const Canvas = () => {
       <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded-md shadow-md flex flex-col gap-2">
         <Text variant="heading" className="block">Schema Builder</Text>
         <div className="flex gap-2">
-          <Button onClick={handleAddNode}>Add Model</Button>
-          <Button variant="secondary" onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleAddNode} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Model
+          </Button>
+          <Button variant="secondary" onClick={handleSave} disabled={isSaving} className="flex items-center gap-2">
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {!isSaving && <Save className="h-4 w-4" />}
             {isSaving && "Saving..."}
             {!isSaving && "Save Progress"}
           </Button>
